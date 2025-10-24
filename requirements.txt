@@ -1,0 +1,23 @@
+# Core dependencies - install in this order to avoid build issues on Windows
+
+# Install numpy first from pre-built wheel (2.x for Python 3.14 compatibility)
+numpy>=2.0.0
+
+# Configuration and utilities
+pydantic>=2.6.0
+pydantic-settings>=2.3.0
+python-dotenv>=1.0.1
+loguru>=0.7.2
+click>=8.1.0
+
+# Audio and keyboard
+sounddevice>=0.4.7
+pynput>=1.7.7
+pyperclip>=1.8.2
+
+# ML dependencies (install after numpy)
+torch>=2.0.0
+sentence-transformers>=3.1.0
+faster-whisper>=1.2.0
+chromadb>=0.5.0
+

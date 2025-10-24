@@ -1,0 +1,2 @@
+"""Output simulation infrastructure."""
+

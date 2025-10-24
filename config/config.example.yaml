@@ -1,0 +1,52 @@
+# RayWhisper Example Configuration
+# Copy this file to config.yaml and adjust values as needed
+
+# Audio Configuration
+audio:
+  sample_rate: 16000        # Hz
+  channels: 1               # Mono
+  chunk_duration: 0.1       # seconds
+
+# Whisper Model Configuration
+# ⚠️ IMPORTANT: GPU acceleration requires CUDA 12 and cuDNN 9 with a compatible NVIDIA GPU
+# If you don't have CUDA 12/cuDNN 9, use: device: "cpu" and compute_type: "int8"
+whisper:
+  model_size: "base"        # Standard sizes: tiny, base, small, medium, large-v2, large-v3, distil-large-v3
+                            # Or HuggingFace model ID: Systran/faster-whisper-medium.en, Systran/faster-whisper-large-v3, etc.
+  device: "cpu"             # cpu, cuda, auto (use "cpu" if you don't have CUDA 12/cuDNN 9)
+  compute_type: "int8"      # int8 (fastest on CPU), int8_float16 (for GPU), float16, float32
+  language: null            # null for auto-detect, or "en", "es", etc.
+
+# GPU Configuration (requires CUDA 12 + cuDNN 9):
+#   device: "cuda"
+#   compute_type: "int8_float16"
+#
+# CPU Configuration (no CUDA required):
+#   device: "cpu"
+#   compute_type: "int8"
+
+# Vector Database Configuration
+vector_db:
+  collection_name: "raywhisper_docs"
+  embedding_model: "BAAI/bge-small-en-v1.5"   # default; consider BAAI/bge-m3 for multilingual/long-docs
+  persist_directory: "./data/chroma"
+  top_k: 5                  # Number of results to retrieve
+  chunk_size: 3             # Number of words per chunk (2-5 recommended for keyword/phrase matching)
+  chunk_overlap: 2          # Number of overlapping words between chunks
+  use_query_instruction: false  # Use instruction prefix for queries (false for keyword-based search)
+
+# Reranker Configuration
+reranker:
+  model_name: "BAAI/bge-reranker-v2-m3"     # alternative: jinaai/jina-reranker-v2-base-multilingual (non-commercial)
+  top_n: 3                  # Number of results after reranking
+
+# Keyboard Configuration
+keyboard:
+  start_stop_hotkey: "ctrl+shift+space"
+  cancel_hotkey: "ctrl+shift+esc"
+
+# Output Configuration
+output:
+  typing_speed: 0.01        # Delay between keystrokes (seconds)
+  use_clipboard_fallback: false
+
