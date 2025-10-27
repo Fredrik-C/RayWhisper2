@@ -1,0 +1,4 @@
+# CODEOWNERS — make @Fredrik-C the code owner for everything
+# Format: <pattern> <owner>
+# This makes you the single code owner for all files.
+* @Fredrik-C
