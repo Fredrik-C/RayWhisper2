@@ -38,16 +38,19 @@ QUICK START
    raywhisper.exe run
    
    You should see:
-   "Listening for key hold: ctrl+shift+space"
-   "Hold keys to record, release to transcribe"
+   "Listening for Caps Lock toggle"
+   "Enable Caps Lock to record, disable to transcribe"
 
 3. USE VOICE-TO-TEXT
-   
-   a) Hold down: Ctrl + Shift + Space
-   b) Speak clearly while holding the keys
-   c) Release the keys when done speaking
+
+   a) Enable Caps Lock (the LED will turn on)
+   b) Speak clearly while Caps Lock is enabled
+   c) Disable Caps Lock when done speaking (the LED will turn off)
    d) Wait a moment - the transcribed text will be typed automatically
       into whatever application has focus
+
+   Tip: The Caps Lock LED provides visual feedback - when it's on, you're
+        recording!
 
 ================================================================================
 CONFIGURATION
@@ -69,8 +72,10 @@ Common settings to customize:
 - Keyboard Shortcuts:
   keyboard:
     start_stop_hotkey: "ctrl+shift+space"
-  
-  Change to your preferred key combination
+
+  Note: This setting is currently not used. The application uses Caps Lock
+  as the recording toggle. See the documentation for how to switch back to
+  key combinations if preferred.
 
 - Device (CPU vs GPU):
   whisper:

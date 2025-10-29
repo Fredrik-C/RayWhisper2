@@ -15,9 +15,11 @@ class PynputKeyboardController(IKeyboardController):
         """Initialize the keyboard controller."""
         self._hotkeys: dict[str, Callable[[], None]] = {}
         self._key_hold_config: dict[str, tuple[Callable[[], None], Callable[[], None]]] | None = None
+        self._caps_lock_config: tuple[Callable[[], None], Callable[[], None]] | None = None
         self._listener: keyboard.Listener | None = None
         self._pressed_keys: set[keyboard.Key | keyboard.KeyCode] = set()
         self._key_hold_active = False
+        self._caps_lock_active = False
 
     def register_hotkey(self, hotkey: str, callback: Callable[[], None]) -> None:
         """Register a global hotkey.
@@ -43,6 +45,18 @@ class PynputKeyboardController(IKeyboardController):
         """
         self._key_hold_config = (hotkey, (on_press, on_release))
         logger.debug(f"Registered key hold: {hotkey}")
+
+    def register_caps_lock_toggle(
+        self, on_enabled: Callable[[], None], on_disabled: Callable[[], None]
+    ) -> None:
+        """Register callbacks for Caps Lock state changes.
+
+        Args:
+            on_enabled: Function to call when Caps Lock is enabled.
+            on_disabled: Function to call when Caps Lock is disabled.
+        """
+        self._caps_lock_config = (on_enabled, on_disabled)
+        logger.debug("Registered Caps Lock toggle")
 
     def _convert_hotkey_format(self, hotkey: str) -> str:
         """Convert 'ctrl+shift+space' to '<ctrl>+<shift>+<space>'.
@@ -137,6 +151,13 @@ class PynputKeyboardController(IKeyboardController):
         """
         self._pressed_keys.add(key)
 
+        # Check if Caps Lock was pressed and toggle monitoring is configured
+        if self._caps_lock_config and key == keyboard.Key.caps_lock:
+            on_enabled, on_disabled = self._caps_lock_config
+            # Call the platform-specific method to check Caps Lock state
+            if hasattr(self, '_check_caps_lock_state'):
+                self._check_caps_lock_state(on_enabled, on_disabled)
+
         # Check if key hold is configured
         if self._key_hold_config:
             hotkey, (on_press_callback, _) = self._key_hold_config
@@ -180,8 +201,8 @@ class PynputKeyboardController(IKeyboardController):
             logger.warning("Listener already started")
             return
 
-        if not self._hotkeys and not self._key_hold_config:
-            logger.warning("No hotkeys or key holds registered")
+        if not self._hotkeys and not self._key_hold_config and not self._caps_lock_config:
+            logger.warning("No hotkeys, key holds, or Caps Lock toggle registered")
             return
 
         logger.info("Starting keyboard listener")
@@ -206,6 +227,8 @@ class PynputKeyboardController(IKeyboardController):
         self.stop_listening()
         self._hotkeys.clear()
         self._key_hold_config = None
+        self._caps_lock_config = None
         self._pressed_keys.clear()
         self._key_hold_active = False
+        self._caps_lock_active = False
 

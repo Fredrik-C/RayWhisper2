@@ -31,6 +31,18 @@ class IKeyboardController(ABC):
         pass
 
     @abstractmethod
+    def register_caps_lock_toggle(
+        self, on_enabled: Callable[[], None], on_disabled: Callable[[], None]
+    ) -> None:
+        """Register callbacks for Caps Lock state changes.
+
+        Args:
+            on_enabled: Function to call when Caps Lock is enabled.
+            on_disabled: Function to call when Caps Lock is disabled.
+        """
+        pass
+
+    @abstractmethod
     def unregister_all(self) -> None:
         """Unregister all hotkeys."""
         pass

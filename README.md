@@ -91,7 +91,9 @@ This will parse and embed all Markdown files from the specified directories.
 raywhisper run
 ```
 
-Hold `Ctrl+Shift+Space` to record (press to start, release to stop and transcribe). The transcribed text will be typed into the active application.
+**Enable Caps Lock** to start recording, **disable Caps Lock** to stop and transcribe. The transcribed text will be typed into the active application.
+
+> **Note:** The Caps Lock LED provides visual feedback of the recording state - when the LED is on, you're recording.
 
 ## Development
 

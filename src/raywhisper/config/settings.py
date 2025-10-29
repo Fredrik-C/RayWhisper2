@@ -108,7 +108,7 @@ class KeyboardSettings(BaseSettings):
 
     start_stop_hotkey: str = Field(
         default="ctrl+shift+space",
-        description="Key combination to hold for recording (press to start, release to stop)",
+        description="Key combination to hold for recording (NOTE: Currently not used - app uses Caps Lock toggle)",
     )
     cancel_hotkey: str = Field(default="ctrl+shift+esc", description="Hotkey to cancel recording")
 
