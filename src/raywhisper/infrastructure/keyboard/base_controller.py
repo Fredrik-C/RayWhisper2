@@ -1,5 +1,6 @@
 """Base keyboard controller implementation using pynput."""
 
+from abc import abstractmethod
 from typing import Callable
 
 from loguru import logger
@@ -56,7 +57,54 @@ class PynputKeyboardController(IKeyboardController):
             on_disabled: Function to call when Caps Lock is disabled.
         """
         self._caps_lock_config = (on_enabled, on_disabled)
-        logger.debug("Registered Caps Lock toggle")
+
+        # Initialize state to match actual Caps Lock state at registration time
+        if hasattr(self, '_is_caps_lock_on'):
+            self._caps_lock_active = self._is_caps_lock_on()
+            logger.debug(f"Registered Caps Lock toggle (initial state: {'ON' if self._caps_lock_active else 'OFF'})")
+        else:
+            logger.debug("Registered Caps Lock toggle")
+
+    @abstractmethod
+    def _is_caps_lock_on(self) -> bool:
+        """Check if Caps Lock is currently enabled.
+
+        Platform-specific implementation required.
+
+        Returns:
+            bool: True if Caps Lock is on, False otherwise.
+        """
+        pass
+
+    def _check_caps_lock_state(
+        self, on_enabled: Callable[[], None], on_disabled: Callable[[], None]
+    ) -> None:
+        """Check Caps Lock state and call appropriate callback.
+
+        This method is shared across all platforms. Only _is_caps_lock_on()
+        needs to be implemented by platform-specific controllers.
+
+        Args:
+            on_enabled: Function to call when Caps Lock is enabled.
+            on_disabled: Function to call when Caps Lock is disabled.
+        """
+        is_on = self._is_caps_lock_on()
+
+        # Check if state has changed
+        if is_on and not self._caps_lock_active:
+            self._caps_lock_active = True
+            logger.debug("Caps Lock enabled")
+            try:
+                on_enabled()
+            except Exception as e:
+                logger.error(f"Error in Caps Lock enabled callback: {e}", exc_info=True)
+        elif not is_on and self._caps_lock_active:
+            self._caps_lock_active = False
+            logger.debug("Caps Lock disabled")
+            try:
+                on_disabled()
+            except Exception as e:
+                logger.error(f"Error in Caps Lock disabled callback: {e}", exc_info=True)
 
     def _convert_hotkey_format(self, hotkey: str) -> str:
         """Convert 'ctrl+shift+space' to '<ctrl>+<shift>+<space>'.
@@ -154,9 +202,8 @@ class PynputKeyboardController(IKeyboardController):
         # Check if Caps Lock was pressed and toggle monitoring is configured
         if self._caps_lock_config and key == keyboard.Key.caps_lock:
             on_enabled, on_disabled = self._caps_lock_config
-            # Call the platform-specific method to check Caps Lock state
-            if hasattr(self, '_check_caps_lock_state'):
-                self._check_caps_lock_state(on_enabled, on_disabled)
+            # Call the shared method to check Caps Lock state
+            self._check_caps_lock_state(on_enabled, on_disabled)
 
         # Check if key hold is configured
         if self._key_hold_config:

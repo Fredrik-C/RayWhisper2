@@ -1,7 +1,6 @@
 """macOS-specific keyboard controller."""
 
 import subprocess
-from typing import Callable
 
 from loguru import logger
 
@@ -11,7 +10,7 @@ from .base_controller import PynputKeyboardController
 class MacOSKeyboardController(PynputKeyboardController):
     """macOS-specific keyboard controller.
 
-    Inherits from PynputKeyboardController and adds macOS-specific features if needed.
+    Inherits from PynputKeyboardController and adds macOS-specific features.
     Note: Requires Accessibility permissions on macOS.
     """
 
@@ -27,47 +26,29 @@ class MacOSKeyboardController(PynputKeyboardController):
     def _is_caps_lock_on(self) -> bool:
         """Check if Caps Lock is currently enabled on macOS.
 
+        Uses hidutil command to check the Caps Lock LED state.
+        Note: This spawns a subprocess which may have performance implications.
+        Consider caching or using native APIs for production use.
+
         Returns:
             bool: True if Caps Lock is on, False otherwise.
         """
         try:
             # Use hidutil to check Caps Lock state on macOS
+            # TODO: Consider using native macOS API via ctypes for better performance
             result = subprocess.run(
                 ["hidutil", "property", "--get", "CapsLockLEDState"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                timeout=0.5  # Add timeout to prevent hanging
             )
             # Output is "1" if on, "0" if off
             return result.stdout.strip() == "1"
+        except subprocess.TimeoutExpired:
+            logger.warning("Timeout checking Caps Lock state on macOS")
+            return False
         except Exception as e:
             logger.warning(f"Failed to check Caps Lock state on macOS: {e}")
             return False
-
-    def _check_caps_lock_state(
-        self, on_enabled: Callable[[], None], on_disabled: Callable[[], None]
-    ) -> None:
-        """Check Caps Lock state and call appropriate callback.
-
-        Args:
-            on_enabled: Function to call when Caps Lock is enabled.
-            on_disabled: Function to call when Caps Lock is disabled.
-        """
-        is_on = self._is_caps_lock_on()
-
-        # Check if state has changed
-        if is_on and not self._caps_lock_active:
-            self._caps_lock_active = True
-            logger.debug("Caps Lock enabled")
-            try:
-                on_enabled()
-            except Exception as e:
-                logger.error(f"Error in Caps Lock enabled callback: {e}", exc_info=True)
-        elif not is_on and self._caps_lock_active:
-            self._caps_lock_active = False
-            logger.debug("Caps Lock disabled")
-            try:
-                on_disabled()
-            except Exception as e:
-                logger.error(f"Error in Caps Lock disabled callback: {e}", exc_info=True)
 
