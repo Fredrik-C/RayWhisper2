@@ -41,6 +41,8 @@ reranker:
   top_n: 3                  # Number of results after reranking
 
 # Keyboard Configuration
+# NOTE: start_stop_hotkey is currently not used - the app uses Caps Lock toggle
+# To switch back to key combinations, see QUICKSTART.md "Switching Back to Key Press Mode"
 keyboard:
   start_stop_hotkey: "ctrl+shift+space"
   cancel_hotkey: "ctrl+shift+esc"

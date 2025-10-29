@@ -40,3 +40,7 @@ def sample_document():
         metadata={"type": "markdown"},
     )
 
+
+# Note: Keyboard controller fixtures are defined in test_keyboard_caps_lock.py
+# as they are specific to those tests and use a mock implementation
+

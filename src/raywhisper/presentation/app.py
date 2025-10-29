@@ -119,17 +119,16 @@ class RayWhisperApp:
         """Start the application."""
         logger.info("Starting RayWhisper...")
 
-        # Register key hold (press to start, release to stop)
-        self._keyboard_controller.register_key_hold(
-            self._settings.keyboard.start_stop_hotkey,
+        # Register Caps Lock toggle (enable to start, disable to stop)
+        self._keyboard_controller.register_caps_lock_toggle(
             self._start_recording,
             self._stop_recording,
         )
 
         self._keyboard_controller.start_listening()
 
-        logger.info(f"Listening for key hold: {self._settings.keyboard.start_stop_hotkey}")
-        logger.info("Hold keys to record, release to transcribe")
+        logger.info("Listening for Caps Lock toggle")
+        logger.info("Enable Caps Lock to record, disable to transcribe")
         logger.info("Press Ctrl+C to exit")
 
         try:
@@ -141,19 +140,19 @@ class RayWhisperApp:
             self.shutdown()
 
     def _start_recording(self) -> None:
-        """Start recording when keys are pressed."""
+        """Start recording when Caps Lock is enabled."""
         try:
             if not self._audio_recorder.is_recording():
-                logger.info("Keys pressed: Starting recording")
+                logger.info("Caps Lock enabled: Starting recording")
                 self._voice_input_use_case.start_recording()
         except Exception as e:
             logger.error(f"Error starting recording: {e}", exc_info=True)
 
     def _stop_recording(self) -> None:
-        """Stop recording and transcribe when keys are released."""
+        """Stop recording and transcribe when Caps Lock is disabled."""
         try:
             if self._audio_recorder.is_recording():
-                logger.info("Keys released: Stopping recording and transcribing")
+                logger.info("Caps Lock disabled: Stopping recording and transcribing")
                 self._voice_input_use_case.stop_recording_and_transcribe()
         except Exception as e:
             logger.error(f"Error stopping recording: {e}", exc_info=True)
@@ -166,9 +165,8 @@ class RayWhisperApp:
     def _resume_keyboard_listener(self) -> None:
         """Resume keyboard listener after text output is complete."""
         logger.debug("Resuming keyboard listener after text output")
-        # Re-register the key hold
-        self._keyboard_controller.register_key_hold(
-            self._settings.keyboard.start_stop_hotkey,
+        # Re-register the Caps Lock toggle
+        self._keyboard_controller.register_caps_lock_toggle(
             self._start_recording,
             self._stop_recording,
         )

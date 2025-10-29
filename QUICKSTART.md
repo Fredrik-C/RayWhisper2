@@ -64,7 +64,7 @@ whisper:
   compute_type: "float16"
 
 keyboard:
-  start_stop_hotkey: "ctrl+space"
+  start_stop_hotkey: "ctrl+space"  # Note: Not used with Caps Lock toggle
 ```
 
 **If you DON'T have CUDA 12/cuDNN 9, change to CPU mode:**
@@ -75,8 +75,10 @@ whisper:
   compute_type: "int8"    # int8 is fastest on CPU
 
 keyboard:
-  start_stop_hotkey: "ctrl+space"
+  start_stop_hotkey: "ctrl+space"  # Note: Not used with Caps Lock toggle
 ```
+
+> **Note:** The `start_stop_hotkey` setting is currently not used. The application uses **Caps Lock** as the toggle for recording. See "Switching Back to Key Press" section below if you want to use hotkey combinations instead.
 
 ## Usage
 
@@ -102,17 +104,19 @@ raywhisper run
 
 You should see:
 ```
-Listening for key hold: ctrl+space
-Hold keys to record, release to transcribe
+Listening for Caps Lock toggle
+Enable Caps Lock to record, disable to transcribe
 Press Ctrl+C to exit
 ```
 
 ### 3. Use Voice-to-Text
 
-1. **Hold Keys**: Press and hold `Ctrl+Space` to start recording
-2. **Speak**: Say what you want to transcribe while holding the keys
-3. **Release Keys**: Release the keys to stop recording and start transcription
+1. **Enable Caps Lock** to start recording (the Caps Lock LED will turn on)
+2. **Speak**: Say what you want to transcribe while Caps Lock is enabled
+3. **Disable Caps Lock** to stop recording and start transcription (the LED will turn off)
 4. **Wait**: The text will be transcribed and typed into your active application
+
+> **Tip:** The Caps Lock LED provides visual feedback - when it's on, you're recording!
 
 ## Testing
 
@@ -260,6 +264,36 @@ If keystroke simulation is unreliable, enable clipboard fallback:
 ```bash
 RAYWHISPER_OUTPUT__USE_CLIPBOARD_FALLBACK=true
 ```
+
+### Switching Back to Key Press Mode
+
+If you prefer the old key combination hold behavior instead of Caps Lock toggle:
+
+1. Open `src/raywhisper/presentation/app.py`
+2. In the `run()` method (around line 123), change:
+   ```python
+   # Current: Caps Lock toggle
+   self._keyboard_controller.register_caps_lock_toggle(
+       self._start_recording,
+       self._stop_recording,
+   )
+   ```
+   to:
+   ```python
+   # Old: Key hold
+   self._keyboard_controller.register_key_hold(
+       self._settings.keyboard.start_stop_hotkey,
+       self._start_recording,
+       self._stop_recording,
+   )
+   ```
+3. Make the same change in the `_resume_keyboard_listener()` method (around line 169)
+4. Update the log messages to reflect the change
+5. Configure your preferred hotkey in `config/config.yaml`:
+   ```yaml
+   keyboard:
+     start_stop_hotkey: "ctrl+shift+space"  # Your preferred combination
+   ```
 
 ## License
 

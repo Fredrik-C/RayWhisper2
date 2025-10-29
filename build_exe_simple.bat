@@ -133,7 +133,7 @@ echo.
 echo Quick Start:
 echo   1. raywhisper.exe populate ^<path-to-docs^> --clear
 echo   2. raywhisper.exe run
-echo   3. Hold Ctrl+Shift+Space to record, release to transcribe
+echo   3. Enable Caps Lock to record, disable to transcribe
 echo.
 echo Configuration: Edit config/config.yaml
 echo Logs: Check logs/raywhisper.log
