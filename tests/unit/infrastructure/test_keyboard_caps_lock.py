@@ -80,10 +80,10 @@ class TestCapsLockStateInitialization:
         on_enabled.assert_not_called()
         on_disabled.assert_not_called()
 
-    def test_state_matches_actual_caps_lock_state(
+    def test_state_matches_actual_caps_lock_state_off(
         self, mock_controller: MockKeyboardController
     ) -> None:
-        """Test that initialized state always matches actual Caps Lock state."""
+        """Test that initialized state matches actual Caps Lock state when off."""
         on_enabled = MagicMock()
         on_disabled = MagicMock()
 
@@ -91,12 +91,20 @@ class TestCapsLockStateInitialization:
         mock_controller.set_caps_lock_state(False)
         mock_controller.register_caps_lock_toggle(on_enabled, on_disabled)
         assert mock_controller._caps_lock_active == mock_controller._is_caps_lock_on()
+        assert mock_controller._caps_lock_active is False
 
-        # Reset and test with Caps Lock on
-        mock_controller._caps_lock_config = None
-        mock_controller.set_caps_lock_state(True)
-        mock_controller.register_caps_lock_toggle(on_enabled, on_disabled)
-        assert mock_controller._caps_lock_active == mock_controller._is_caps_lock_on()
+    def test_state_matches_actual_caps_lock_state_on(
+        self, mock_controller_caps_on: MockKeyboardController
+    ) -> None:
+        """Test that initialized state matches actual Caps Lock state when on."""
+        on_enabled = MagicMock()
+        on_disabled = MagicMock()
+
+        # Test with Caps Lock on (using fresh fixture)
+        mock_controller_caps_on.set_caps_lock_state(True)
+        mock_controller_caps_on.register_caps_lock_toggle(on_enabled, on_disabled)
+        assert mock_controller_caps_on._caps_lock_active == mock_controller_caps_on._is_caps_lock_on()
+        assert mock_controller_caps_on._caps_lock_active is True
 
 
 class TestCapsLockStateChanges:

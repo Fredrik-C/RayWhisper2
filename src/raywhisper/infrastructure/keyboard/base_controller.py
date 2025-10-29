@@ -59,11 +59,10 @@ class PynputKeyboardController(IKeyboardController):
         self._caps_lock_config = (on_enabled, on_disabled)
 
         # Initialize state to match actual Caps Lock state at registration time
-        if hasattr(self, '_is_caps_lock_on'):
-            self._caps_lock_active = self._is_caps_lock_on()
-            logger.debug(f"Registered Caps Lock toggle (initial state: {'ON' if self._caps_lock_active else 'OFF'})")
-        else:
-            logger.debug("Registered Caps Lock toggle")
+        # Since _is_caps_lock_on() is an abstract method, it will always be implemented
+        # by subclasses (or Python will raise TypeError at instantiation)
+        self._caps_lock_active = self._is_caps_lock_on()
+        logger.debug(f"Registered Caps Lock toggle (initial state: {'ON' if self._caps_lock_active else 'OFF'})")
 
     @abstractmethod
     def _is_caps_lock_on(self) -> bool:

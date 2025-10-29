@@ -41,7 +41,7 @@ class MacOSKeyboardController(PynputKeyboardController):
                 capture_output=True,
                 text=True,
                 check=True,
-                timeout=0.5  # Add timeout to prevent hanging
+                timeout=0.1  # Short timeout to prevent UI lag on key press
             )
             # Output is "1" if on, "0" if off
             return result.stdout.strip() == "1"
