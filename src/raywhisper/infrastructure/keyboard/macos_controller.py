@@ -48,7 +48,13 @@ class MacOSKeyboardController(PynputKeyboardController):
         except subprocess.TimeoutExpired:
             logger.warning("Timeout checking Caps Lock state on macOS")
             return False
+        except subprocess.CalledProcessError as e:
+            logger.warning(f"hidutil command failed (exit code {e.returncode}): {e.stderr}")
+            return False
+        except FileNotFoundError:
+            logger.error("hidutil command not found - Caps Lock detection unavailable on this macOS version")
+            return False
         except Exception as e:
-            logger.warning(f"Failed to check Caps Lock state on macOS: {e}")
+            logger.warning(f"Unexpected error checking Caps Lock state on macOS: {e}")
             return False
 
