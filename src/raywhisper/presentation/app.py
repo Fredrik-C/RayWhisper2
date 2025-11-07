@@ -102,6 +102,14 @@ class RayWhisperApp:
 
         # Infrastructure - Keyboard
         self._keyboard_controller = create_keyboard_controller()
+        # Configure Caps Lock monitoring interval if supported (Windows/macOS)
+        try:
+            interval_sec = float(self._settings.keyboard.caps_lock_poll_interval_ms) / 1000.0
+            if hasattr(self._keyboard_controller, "set_caps_lock_monitor_interval"):
+                self._keyboard_controller.set_caps_lock_monitor_interval(interval_sec)
+                logger.debug(f"Configured Caps Lock monitor interval: {interval_sec*1000:.0f} ms")
+        except Exception as e:
+            logger.warning(f"Failed to configure Caps Lock monitor interval: {e}")
 
         # Application - Use Cases
         self._voice_input_use_case = ProcessVoiceInputUseCase(

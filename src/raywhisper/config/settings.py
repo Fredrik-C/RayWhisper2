@@ -111,6 +111,11 @@ class KeyboardSettings(BaseSettings):
         description="Key combination to hold for recording (NOTE: Currently not used - app uses Caps Lock toggle)",
     )
     cancel_hotkey: str = Field(default="ctrl+shift+esc", description="Hotkey to cancel recording")
+    caps_lock_poll_interval_ms: float = Field(
+        default=50.0,
+        ge=5.0,
+        description="Polling interval for Caps Lock monitoring in milliseconds (Windows/macOS). Smaller = more responsive; larger = lower CPU.",
+    )
 
 
 class OutputSettings(BaseSettings):
