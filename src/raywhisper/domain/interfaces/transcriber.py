@@ -10,7 +10,14 @@ class ITranscriber(ABC):
     """Interface for audio transcription."""
 
     @abstractmethod
-    def transcribe(self, audio: AudioData, context: str | None = None) -> Transcription:
+    def transcribe(
+        self,
+        audio: AudioData,
+        context: str | None = None,
+        hotwords: str | None = None,
+        condition_on_previous_text: bool | None = None,
+        carry_initial_prompt: bool | None = None,
+    ) -> Transcription:
         """Transcribe audio to text, optionally using context for guidance.
 
         Args:

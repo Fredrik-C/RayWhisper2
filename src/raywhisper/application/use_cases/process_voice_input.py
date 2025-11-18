@@ -55,24 +55,69 @@ class ProcessVoiceInputUseCase:
 
         logger.info(f"Transcribing {audio.duration:.2f}s of audio...")
 
-        # Get initial transcription for context retrieval
-        initial_transcription = self._transcriber.transcribe(audio)
-        logger.info(f"Initial transcription: {initial_transcription.text}")
+        # Adaptive strategy based on audio length:
+        # - Short audio (<30s): Two-pass with full context (initial + RAG-enhanced)
+        # - Long audio (≥30s): Single-pass with condensed context to avoid token limits
+        
+        if audio.duration < 30.0:
+            # SHORT AUDIO: Use two-pass approach for maximum accuracy
+            logger.info("Using two-pass transcription (short audio)")
+            
+            # Get initial transcription for context retrieval
+            initial_transcription = self._transcriber.transcribe(audio)
+            logger.info(f"Initial transcription: {initial_transcription.text}")
 
-        # Retrieve context if RAG service is available
-        context = None
-        if self._rag_service and initial_transcription.text:
-            logger.info("Retrieving RAG context...")
-            context = self._rag_service.retrieve_context(initial_transcription.text)
+            # Retrieve context if RAG service is available
+            context = None
+            if self._rag_service and initial_transcription.text:
+                logger.info("Retrieving RAG context...")
+                context = self._rag_service.retrieve_context(
+                    initial_transcription.text,
+                    max_tokens=100  # Full context for short audio
+                )
 
-        # Final transcription with context
-        if context:
-            logger.info("Re-transcribing with RAG context...")
-            final_transcription = self._transcriber.transcribe(audio, context=context)
+            # Final transcription with context
+            if context:
+                logger.info("Re-transcribing with RAG context...")
+                final_transcription = self._transcriber.transcribe(audio, context=context)
+            else:
+                final_transcription = initial_transcription
         else:
-            final_transcription = initial_transcription
+            # LONG AUDIO: Single-pass with condensed context
+            # Whisper internally chunks at 30s, so we use a minimal context
+            # that fits within the token budget for each chunk
+            logger.info("Using single-pass transcription with condensed context (long audio)")
+            
+            # For long audio, do a quick initial pass to get query terms
+            initial_transcription = self._transcriber.transcribe(audio)
+            logger.info(f"Initial transcription preview: {initial_transcription.text[:100]}...")
+            
+            # Get highly condensed context (just key terms)
+            context = None
+            if self._rag_service and initial_transcription.text:
+                logger.info("Retrieving condensed RAG context for long audio...")
+                context, hotwords = self._rag_service.retrieve_context(
+                    initial_transcription.text,
+                    max_tokens=50,  # Minimal context to leave room for long transcription
+                    condensed=True,  # Only phonetic matches + top technical terms
+                    return_hotwords=True,
+                )
 
-        logger.info(f"Final transcription: {final_transcription.text}")
+            # Re-transcribe with minimal context and hotwords
+            if context:
+                logger.info("Re-transcribing with condensed context...")
+                # For long audio, enable carrying the prompt and conditioning across chunks
+                final_transcription = self._transcriber.transcribe(
+                    audio,
+                    context=context,
+                    hotwords=hotwords,
+                    condition_on_previous_text=True,
+                    carry_initial_prompt=True,
+                )
+            else:
+                final_transcription = initial_transcription
+
+        logger.info(f"Final transcription ({len(final_transcription.text)} chars): {final_transcription.text[:100]}...")
 
         # Output text
         if final_transcription.text:

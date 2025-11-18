@@ -6,6 +6,7 @@ from typing import Literal
 import numpy as np
 from faster_whisper import WhisperModel
 from loguru import logger
+import inspect
 
 from ...domain.entities.transcription import Transcription
 from ...domain.interfaces.transcriber import ITranscriber
@@ -71,7 +72,14 @@ class WhisperTranscriber(ITranscriber):
             f"condition_on_previous_text={condition_on_previous_text})"
         )
 
-    def transcribe(self, audio: AudioData, context: str | None = None) -> Transcription:
+    def transcribe(
+        self,
+        audio: AudioData,
+        context: str | None = None,
+        hotwords: str | None = None,
+        condition_on_previous_text: bool | None = None,
+        carry_initial_prompt: bool | None = None,
+    ) -> Transcription:
         """Transcribe audio to text.
 
         Args:
@@ -105,19 +113,39 @@ class WhisperTranscriber(ITranscriber):
 
         # Transcribe with optional context
         # Note: consider BatchedInferencePipeline for throughput or distil-large-v3 for speed
-        segments, info = self._model.transcribe(
-            audio_float,
+        transcribe_kwargs = dict(
             initial_prompt=context,
             beam_size=self._beam_size,
             best_of=self._best_of,
             temperature=self._temperature,
-            condition_on_previous_text=self._condition_on_previous_text,
+            condition_on_previous_text=(self._condition_on_previous_text
+                                        if condition_on_previous_text is None
+                                        else condition_on_previous_text),
             compression_ratio_threshold=self._compression_ratio_threshold,
             log_prob_threshold=self._log_prob_threshold,
             no_speech_threshold=self._no_speech_threshold,
             repetition_penalty=self._repetition_penalty,
             vad_filter=True,  # Voice activity detection
         )
+
+        # Pass hotwords if provided (faster-whisper supports hotwords)
+        if hotwords:
+            transcribe_kwargs["hotwords"] = hotwords
+
+        # Optionally carry the initial prompt across chunks (helps long audio)
+        if carry_initial_prompt is True:
+            # Only include this kwarg when the underlying transcribe implementation supports it
+            try:
+                sig = inspect.signature(self._model.transcribe)
+                if "carry_initial_prompt" in sig.parameters:
+                    transcribe_kwargs["carry_initial_prompt"] = True
+                else:
+                    logger.debug("Underlying WhisperModel.transcribe() does not accept 'carry_initial_prompt'; skipping that flag")
+            except (ValueError, TypeError):
+                # If signature inspection fails (built-in/extension), fall back to trying without the flag
+                logger.debug("Could not inspect WhisperModel.transcribe signature; skipping 'carry_initial_prompt' compatibility check")
+
+        segments, info = self._model.transcribe(audio_float, **transcribe_kwargs)
 
         # Combine all segments
         segment_list = list(segments)

@@ -2,6 +2,7 @@
 
 import re
 
+import tiktoken
 from loguru import logger
 
 from ...domain.interfaces.vector_store import IVectorStore
@@ -61,6 +62,10 @@ class RAGService:
         self._reranker = reranker
         self._top_k = top_k
         self._top_n = top_n
+        
+        # Initialize tokenizer for context length management
+        # Whisper uses GPT-2 tokenizer
+        self._tokenizer = tiktoken.get_encoding("gpt2")
 
     # Phonetic substitution rules for common speech-to-text errors
     _PHONETIC_SUBSTITUTIONS = {
@@ -329,11 +334,13 @@ class RAGService:
 
         return terms
 
-    def retrieve_context(self, query: str) -> str:
+    def retrieve_context(self, query: str, max_tokens: int = 100, condensed: bool = False, return_hotwords: bool = False):
         """Retrieve and rerank context for a query.
 
         Args:
             query: The search query.
+            max_tokens: Maximum tokens for the returned context (defaults to 100).
+            condensed: If True, return a condensed context (fewer terms/snippets).
 
         Returns:
             str: Formatted context string combining top reranked results.
@@ -396,56 +403,126 @@ class RAGService:
         if phonetic_matches:
             logger.info(f"Phonetic matches for '{query}': {phonetic_matches}")
 
-        # Boost scores for phonetically similar terms significantly
-        # This ensures they appear at the top of the context
+        # Boost scores for phonetically similar terms moderately
+        # This helps them surface but avoids overpowering the reranker
         for term in phonetic_matches:
             if term in term_scores:
-                term_scores[term] *= 15.0  # 15x boost for phonetic matches to ensure they're first
+                term_scores[term] *= 8.0
             else:
-                # If term wasn't in the extracted terms, add it with a high base score
-                term_scores[term] = 30.0
+                # If term wasn't in the extracted terms, add it with a reasonable base score
+                term_scores[term] = 16.0
 
         # Build final context: technical terms for exact spelling guidance
+        # For condensed mode (long audio) produce a compact, natural-language
+        # instruction that emphasizes exact spellings, casing and punctuation.
         context_parts = []
 
         # Always include ALL phonetic matches first with directive language
-        # These are specifically relevant to misheard words, regardless of ranking
         if phonetic_matches:
-            # Repeat the top phonetic match 3 times for emphasis
-            # This makes Whisper much more likely to use it
+            # Keep phonetic matches for hotwords and optional non-condensed contexts
             top_match = phonetic_matches[0]
             context_parts.append(f"{top_match}. {top_match}. {top_match}")
-
-            # Then list all phonetic matches with directive language
             spell_directive = ", ".join(phonetic_matches)
             context_parts.append(f"Spell: {spell_directive}")
 
         if term_scores:
-            # Sort by relevance score (highest first), limit to top 8
+            term_limit = 3 if condensed else 8
             ranked_terms = sorted(term_scores.items(), key=lambda x: x[1], reverse=True)
-            top_terms = [term for term, score in ranked_terms[:8]]
-
-            # Add technical terms, excluding those already in phonetic matches
+            top_terms = [term for term, score in ranked_terms[:term_limit]]
             other_terms = [term for term in top_terms if term not in phonetic_matches]
-
-            if other_terms:
+            if other_terms and not condensed:
                 terms_list = ", ".join(other_terms)
                 context_parts.append(f"Technical terms: {terms_list}")
 
-        # Add brief context from top result if available
-        if reranked:
-            top_result = reranked[0]
-            # Get a brief snippet (first 50 chars) for context
-            snippet = top_result.content[:50].strip()
-            if snippet and len(context_parts) > 0:  # Only add if we have technical terms
-                context_parts.append(snippet)
+        # For condensed mode, synthesize a short instruction rather than a terse token list
+        if condensed:
+            important = []
+            if phonetic_matches:
+                important.extend(phonetic_matches)
+            if term_scores:
+                # Use the previously computed top_terms as additional important terms
+                ranked_terms = sorted(term_scores.items(), key=lambda x: x[1], reverse=True)
+                top_terms_for_condensed = [term for term, _ in ranked_terms[:3]]
+                for t in top_terms_for_condensed:
+                    if t not in important:
+                        important.append(t)
 
-        context = ". ".join(context_parts)
+            # Deduplicate while preserving order
+            seen = set()
+            important_ordered = []
+            for t in important:
+                if t not in seen:
+                    seen.add(t)
+                    important_ordered.append(t)
 
+            if important_ordered:
+                proper_list = ", ".join(important_ordered)
+                # Natural-language instruction to preserve punctuation/casing and prefer these spellings
+                # Also provide short quoted examples and explicit punctuation guidance
+                examples = ", ".join([f"'{t}'" for t in important_ordered[:10]])
+                context = (
+                    f"Use these exact spellings and capitalizations when transcribing: {proper_list}. "
+                    f"Examples: {examples}. "
+                    "Prioritize correct punctuation and capitalization. "
+                    "Use commas to separate list items and end sentences with periods. "
+                    "Preserve names and product spellings exactly as provided."
+                )
+            else:
+                context = (
+                    "Prioritize correct punctuation and capitalization in the transcription. "
+                    "Preserve names and technical terms where possible."
+                )
+        else:
+            # Non-condensed: join collected context parts
+            context = ". ".join(context_parts)
+
+        # CRITICAL: Whisper's initial_prompt has a hard limit of ~224 tokens
+        # (n_text_ctx // 2 where n_text_ctx = 448)
+        # We must truncate the context to avoid consuming tokens needed for
+        # the actual transcription output, which would cause truncation
+        
+        tokens = self._tokenizer.encode(context)
+        if len(tokens) > max_tokens:
+            # Truncate to fit within token limit
+            truncated_tokens = tokens[:max_tokens]
+            context = self._tokenizer.decode(truncated_tokens)
+            logger.warning(
+                f"RAG context truncated from {len(tokens)} to {max_tokens} tokens "
+                f"to stay within Whisper's initial_prompt limit"
+            )
+
+        mode = "condensed" if condensed else "full"
         logger.info(
-            f"Generated RAG context: '{context}' "
+            f"Generated RAG context [{mode}] ({len(tokens)} tokens, {len(context)} chars): '{context[:100]}...' "
             f"({len(term_scores)} terms extracted, {len(phonetic_matches)} phonetic matches)"
         )
+
+        # Build a hotwords string (space-separated) from phonetic matches + top terms
+        hotwords_list = []
+        if phonetic_matches:
+            hotwords_list.extend(phonetic_matches)
+
+        if term_scores:
+            ranked_terms = sorted(term_scores.items(), key=lambda x: x[1], reverse=True)
+            top_terms_for_hotwords = [term for term, _ in ranked_terms[:3]]
+            for t in top_terms_for_hotwords:
+                if t not in hotwords_list:
+                    hotwords_list.append(t)
+
+        # Expand hotwords conservatively: include original and lowercase only.
+        # Avoid adding title-cased variants which can force unnatural capitalization.
+        expanded = []
+        for w in hotwords_list:
+            if w not in expanded:
+                expanded.append(w)
+            lw = w.lower()
+            if lw not in expanded:
+                expanded.append(lw)
+
+        hotwords = " ".join(expanded) if expanded else None
+
+        if return_hotwords:
+            return context, hotwords
 
         return context
 
