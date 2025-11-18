@@ -87,7 +87,7 @@ raywhisper.exe --version
 raywhisper.exe --help
 
 # Test 3: Populate embeddings
-raywhisper.exe populate ..\..\docs --clear
+raywhisper.exe populate ..\..\docs2ingest --clear
 
 # Test 4: Run
 raywhisper.exe run

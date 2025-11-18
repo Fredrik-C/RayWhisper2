@@ -59,7 +59,7 @@ Edit `.env` or `config/config.yaml` to customize settings:
 - **Device**: Default is cuda (change to cpu if you don't have CUDA 12/cuDNN 9)
 - **Compute Type**: Default is float16 (change to int8 for CPU mode)
 - **Embedding Model**: Default is BAAI/bge-base-en-v1.5
-- **Hotkeys**: Default is ctrl+space (customize as needed)
+- **Hotkeys**: Default is `super+o` (Windows key + comma; customize as needed)
 
 **⚠️ Important - CUDA 12 and cuDNN 9 Required for GPU Mode:**
 - The default configuration uses GPU mode (`device: "cuda"`)
@@ -80,7 +80,7 @@ whisper:
 Before using RAG-enhanced transcription, populate the vector database with your documents:
 
 ```bash
-raywhisper populate ./docs --clear
+raywhisper populate ./docs2ingest --clear
 ```
 
 This will parse and embed all Markdown files from the specified directories.
@@ -91,9 +91,9 @@ This will parse and embed all Markdown files from the specified directories.
 raywhisper run
 ```
 
-**Enable Caps Lock** to start recording, **disable Caps Lock** to stop and transcribe. The transcribed text will be typed into the active application.
+Hold your configured hotkey (default: `super+o`) to start recording and release to stop and transcribe. The transcribed text will be typed into the active application.
 
-> **Note:** The Caps Lock LED provides visual feedback of the recording state - when the LED is on, you're recording.
+> **Note:** On some platforms, the hotkey LED or status may provide visual feedback; otherwise check logs to verify recording state.
 
 ## Development
 
@@ -143,7 +143,7 @@ raywhisper2/
 ├── tests/                   # Tests
 ├── config/                  # Configuration files
 ├── scripts/                 # Utility scripts
-└── docs/                    # Documentation
+└── docs2ingest/                    # Documentation
 ```
 
 ## Technology Stack

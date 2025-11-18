@@ -57,7 +57,7 @@ def populate(directories: tuple[str, ...], clear: bool, config: str | None) -> N
     parses them into chunks, and adds them to the vector database.
 
     Example:
-        raywhisper populate ./docs ./src --clear
+        raywhisper populate ./docs2ingest ./src --clear
     """
     try:
         settings = load_settings(config)

@@ -148,8 +148,9 @@ class PynputKeyboardController(IKeyboardController):
             elif part == "esc":
                 key_groups.append({keyboard.Key.esc})
             elif len(part) == 1:
-                # Single character key
-                key_groups.append({keyboard.KeyCode.from_char(part)})
+                # Single character key - store both the character and KeyCode
+                # Use a tuple marker to indicate this is a character match
+                key_groups.append({("_char_", part)})
             else:
                 logger.warning(f"Unknown key: {part}")
 
@@ -170,20 +171,36 @@ class PynputKeyboardController(IKeyboardController):
         for key_group in required_key_groups:
             group_satisfied = False
             for req_key in key_group:
-                if req_key in self._pressed_keys:
-                    group_satisfied = True
-                    break
-                # Handle canonical form matching for character keys
-                for pressed_key in self._pressed_keys:
-                    try:
-                        if hasattr(pressed_key, "char") and hasattr(req_key, "char"):
-                            if pressed_key.char == req_key.char:
-                                group_satisfied = True
-                                break
-                    except AttributeError:
-                        pass
-                if group_satisfied:
-                    break
+                # Handle character key markers (tuples like ("_char_", "o"))
+                if isinstance(req_key, tuple) and req_key[0] == "_char_":
+                    target_char = req_key[1].lower()
+                    for pressed_key in self._pressed_keys:
+                        try:
+                            # Check if pressed key has a character attribute
+                            if hasattr(pressed_key, "char") and pressed_key.char:
+                                if pressed_key.char.lower() == target_char:
+                                    group_satisfied = True
+                                    break
+                        except (AttributeError, TypeError):
+                            pass
+                    if group_satisfied:
+                        break
+                else:
+                    # Normal key comparison
+                    if req_key in self._pressed_keys:
+                        group_satisfied = True
+                        break
+                    # Handle canonical form matching for pynput Key objects
+                    for pressed_key in self._pressed_keys:
+                        try:
+                            if hasattr(pressed_key, "char") and hasattr(req_key, "char"):
+                                if pressed_key.char and req_key.char and pressed_key.char.lower() == req_key.char.lower():
+                                    group_satisfied = True
+                                    break
+                        except (AttributeError, TypeError):
+                            pass
+                    if group_satisfied:
+                        break
 
             if not group_satisfied:
                 return False

@@ -131,7 +131,7 @@ echo RayWhisper - Voice to Text with RAG
 echo ====================================
 echo.
 echo Quick Start:
-echo   1. raywhisper.exe populate ^<path-to-docs^> --clear
+echo   1. raywhisper.exe populate ^<path-to-docs2ingest^> --clear
 echo   2. raywhisper.exe run
 echo   3. Enable Caps Lock to record, disable to transcribe
 echo.

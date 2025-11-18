@@ -317,7 +317,7 @@ def create_distribution_package():
 ## Quick Start
 
 1. **First Run - Populate Embeddings:**
-   raywhisper.exe populate <path-to-docs> --clear
+    raywhisper.exe populate <path-to-docs2ingest> --clear
 
 2. **Run the Application:**
    raywhisper.exe run
@@ -372,7 +372,7 @@ def print_summary():
     print("     raywhisper.exe --version")
     print()
     print("  2. Populate embeddings:")
-    print("     raywhisper.exe populate <path-to-docs> --clear")
+    print("     raywhisper.exe populate <path-to-docs2ingest> --clear")
     print()
     print("  3. Run the application:")
     print("     raywhisper.exe run")
