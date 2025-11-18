@@ -107,8 +107,8 @@ class KeyboardSettings(BaseSettings):
     """Keyboard control configuration."""
 
     start_stop_hotkey: str = Field(
-        default="ctrl+shift+space",
-        description="Key combination to hold for recording (NOTE: Currently not used - app uses Caps Lock toggle)",
+        default="super+o",
+        description="Key combination to hold for recording (hold to start, release to stop)",
     )
     cancel_hotkey: str = Field(default="ctrl+shift+esc", description="Hotkey to cancel recording")
     caps_lock_poll_interval_ms: float = Field(

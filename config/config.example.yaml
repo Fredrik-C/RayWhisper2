@@ -41,10 +41,10 @@ reranker:
   top_n: 3                  # Number of results after reranking
 
 # Keyboard Configuration
-# NOTE: start_stop_hotkey is currently not used - the app uses Caps Lock toggle
-# To switch back to key combinations, see QUICKSTART.md "Switching Back to Key Press Mode"
+# Key hold hotkey to start recording (hold to record, release to transcribe)
+# For Windows: use "super+o" for Windows key + comma
 keyboard:
-  start_stop_hotkey: "ctrl+shift+space"
+  start_stop_hotkey: "super+o"
   cancel_hotkey: "ctrl+shift+esc"
 
 # Output Configuration
