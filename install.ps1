@@ -55,6 +55,6 @@ pip install -e .
 Write-Host "`nInstallation complete!" -ForegroundColor Green
 Write-Host "`nNext steps:" -ForegroundColor Cyan
 Write-Host "  1. Run tests: pytest" -ForegroundColor White
-Write-Host "  2. Populate embeddings: raywhisper populate ./docs --clear" -ForegroundColor White
+Write-Host "  2. Populate embeddings: raywhisper populate ./docs2ingest --clear" -ForegroundColor White
 Write-Host "  3. Run the app: raywhisper run" -ForegroundColor White
 

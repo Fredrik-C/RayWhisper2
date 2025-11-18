@@ -1,3 +1,4 @@
+```markdown
 # Comprehensive NuGet Packages Documentation
 
 A curated collection of awesome and best NuGet packages sorted by category and popularity.
@@ -435,9 +436,6 @@ Code coverage visualization tool
 ### xunit.analyzers
 Code Analyzers for xUnit.net projects
 
-### xunit.categories
-Friendlier attributes to categorize tests
-
 ---
 
 ## OpenAPI
@@ -485,4 +483,4 @@ Library for creating beautiful, cross platform console applications
 
 **Last Updated**: October 2025
 **Total Packages Documented**: 150+
-
+```

@@ -80,7 +80,7 @@ whisper:
 Before using RAG-enhanced transcription, populate the vector database with your documents:
 
 ```bash
-raywhisper populate ./docs --clear
+raywhisper populate ./docs2ingest --clear
 ```
 
 This will parse and embed all Markdown files from the specified directories.
@@ -143,7 +143,7 @@ raywhisper2/
 ├── tests/                   # Tests
 ├── config/                  # Configuration files
 ├── scripts/                 # Utility scripts
-└── docs/                    # Documentation
+└── docs2ingest/                    # Documentation
 ```
 
 ## Technology Stack

@@ -128,7 +128,7 @@ TROUBLESHOOTING
 
 Problem: "No embeddings found" or poor transcription quality
 Solution: Make sure you've run the populate command first:
-          raywhisper.exe populate <path-to-docs> --clear
+          raywhisper.exe populate <path-to-docs2ingest> --clear
 
 Problem: Application crashes on startup
 Solution: 1. Check logs/raywhisper.log for error messages
@@ -210,7 +210,7 @@ When you add new documents or want to update your knowledge base:
 1. Add/modify your documents in your source directory
 
 2. Re-run the populate command:
-   raywhisper.exe populate <path-to-docs> --clear
+  raywhisper.exe populate <path-to-docs2ingest> --clear
 
 The --clear flag removes old embeddings before adding new ones.
 Omit --clear to add to existing embeddings (incremental update).

@@ -88,7 +88,7 @@ To enable RAG-enhanced transcription, populate the vector database with your doc
 
 ```bash
 # Populate from your documentation
-raywhisper populate ./docs --clear
+raywhisper populate ./docs2ingest --clear
 ```
 
 This will:
@@ -254,7 +254,7 @@ raywhisper info
 ### Clear Vector Database
 
 ```bash
-raywhisper populate ./docs --clear
+raywhisper populate ./docs2ingest --clear
 ```
 
 ### Use Clipboard Fallback
